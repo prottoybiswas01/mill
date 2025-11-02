@@ -3,309 +3,156 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>November Mill — Meal & Payment Tracker</title>
+  <title>Meal & Payment Tracker</title>
   <style>
-    :root{--bg:#f7f9fb;--card:#fff;--muted:#6b7280;--accent:#0ea5a2;--danger:#ef4444}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:#0f172a;background:linear-gradient(180deg,#eef2f7, #f7fbfd)}
-    .wrap{max-width:980px;margin:28px auto;padding:20px}
-    header{display:flex;gap:16px;align-items:center;justify-content:space-between}
-    h1{margin:0;font-size:20px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
-
-    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(12,20,40,0.06);margin-top:18px}
-
-    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .controls label{font-size:13px;color:var(--muted)}
-    .controls input[type=number], .controls input[type=text]{padding:8px;border-radius:8px;border:1px solid #e6eef4;width:120px}
-
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:8px;border-bottom:1px solid #eef4f8;text-align:center;font-size:14px}
-    th{background:#fbfdfe;color:#0f172a;font-weight:600}
-
-    .btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:white;text-decoration:none;cursor:pointer;border:none}
+    body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:#f7f9fb;color:#0f172a;margin:0;padding:20px}
+    h1{font-size:22px;margin:0 0 10px}
+    .container{max-width:1000px;margin:auto}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+    .controls label{font-size:13px;color:#555}
+    .controls input,.controls select{padding:6px 8px;border:1px solid #ddd;border-radius:6px}
+    table{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+    th,td{padding:8px;text-align:center;border-bottom:1px solid #eee}
+    th{background:#f0f4f8;font-weight:600}
+    .summary{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
+    .tile{flex:1;min-width:150px;background:white;border-radius:8px;padding:10px;text-align:center;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
+    .btn{padding:6px 10px;border:none;border-radius:6px;background:#0ea5a2;color:white;cursor:pointer}
     .btn.secondary{background:#e6eef4;color:#0f172a}
-    .small{font-size:12px;padding:6px 8px}
-
-    .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    .summary .tile{flex:1;min-width:160px;background:linear-gradient(180deg,#ffffff,#fbfeff);padding:12px;border-radius:10px;box-shadow:0 3px 10px rgba(10,14,20,0.03)}
-    .tile h3{margin:0;font-size:13px;color:var(--muted)}
-    .tile p{margin:6px 0 0;font-size:18px;font-weight:600}
-
-    .actions{display:flex;gap:8px;align-items:center}
-    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-
-    @media (max-width:700px){table th:nth-child(4),table td:nth-child(4), table th:nth-child(5),table td:nth-child(5){display:none}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>November 2025 — Meal & Payment Tracker</h1>
-        <p class="lead">Interactive version of your Google Sheet: track daily lunch/dinner, totals, payments and balance.</p>
-      </div>
-      <div class="actions">
-        <button class="btn" id="resetBtn">Reset Month</button>
-        <button class="btn secondary" id="importBtn">Import CSV</button>
-        <button class="btn" id="exportBtn">Export CSV</button>
-      </div>
-    </header>
+  <div class="container">
+    <h1>Meal & Payment Tracker</h1>
+    <div class="controls">
+      <label>Month:
+        <select id="monthSelect"></select>
+      </label>
+      <label>Price per Lunch: <input id="priceLunch" type="number" min="0" value="20"></label>
+      <label>Price per Dinner: <input id="priceDinner" type="number" min="0" value="30"></label>
+      <label>Paid Amount: <input id="paidAmount" type="number" min="0" value="0"></label>
+      <button class="btn" id="calcBtn">Recalculate</button>
+      <button class="btn secondary" id="resetBtn">Reset</button>
+    </div>
 
-    <section class="card">
-      <div class="controls">
-        <label>Price per Lunch: <input id="priceLunch" type="number" min="0" step="1" value="0"></label>
-        <label>Price per Dinner: <input id="priceDinner" type="number" min="0" step="1" value="0"></label>
-        <label>Paid Amount: <input id="paidAmount" type="number" min="0" step="1" value="0"></label>
-        <label>Month (for dates): <input id="monthLabel" type="text" value="November 2025",></label>
-      </div>
+    <table id="daysTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Lunch</th>
+          <th>Dinner</th>
+          <th>Lunch Tk</th>
+          <th>Dinner Tk</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-      <table id="daysTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Lunch (pcs)</th>
-            <th>Dinner (pcs)</th>
-            <th>Total Lunch Tk</th>
-            <th>Total Dinner Tk</th>
-            <th>Row Total Tk</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="summary">
-        <div class="tile">
-          <h3>Total Lunch Items</h3>
-          <p id="totalLunchCount">0</p>
-        </div>
-        <div class="tile">
-          <h3>Total Dinner Items</h3>
-          <p id="totalDinnerCount">0</p>
-        </div>
-        <div class="tile">
-          <h3>Total Taka (All)</h3>
-          <p id="totalTaka">0</p>
-        </div>
-        <div class="tile">
-          <h3>Paid Amount</h3>
-          <p id="paidTaka">0</p>
-        </div>
-        <div class="tile">
-          <h3>Balance</h3>
-          <p id="balanceTaka">0</p>
-        </div>
-      </div>
-
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-        <button class="btn small" id="calcBtn">Recalculate</button>
-        <button class="btn small secondary" id="fillSample">Fill Sample Data</button>
-        <input id="notes" type="text" placeholder="Notes (optional)" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6eef4"/>
-      </div>
-    </section>
-
-    <footer class="card">
-      Tip: values persist in your browser (localStorage). Use export to download a CSV backup.
-    </footer>
+    <div class="summary">
+      <div class="tile"><strong>Total Lunch</strong><div id="totalLunch">0</div></div>
+      <div class="tile"><strong>Total Dinner</strong><div id="totalDinner">0</div></div>
+      <div class="tile"><strong>Total Tk</strong><div id="totalTaka">0</div></div>
+      <div class="tile"><strong>Paid</strong><div id="paidTk">0</div></div>
+      <div class="tile"><strong>Balance</strong><div id="balanceTk">0</div></div>
+    </div>
   </div>
 
-  <input id="fileInput" type="file" accept="text/csv" style="display:none" />
-
   <script>
-    // Configuration: month and number of days
-    const year = 2025;
-    const month = 10; // 0-based month index (10 = November)
-    const daysInMonth = new Date(year, month+1, 0).getDate();
-
-    // DOM refs
+    const monthSelect = document.getElementById('monthSelect');
     const tbody = document.querySelector('#daysTable tbody');
-    const priceLunchEl = document.getElementById('priceLunch');
-    const priceDinnerEl = document.getElementById('priceDinner');
-    const paidAmountEl = document.getElementById('paidAmount');
-    const totalLunchCountEl = document.getElementById('totalLunchCount');
-    const totalDinnerCountEl = document.getElementById('totalDinnerCount');
-    const totalTakaEl = document.getElementById('totalTaka');
-    const paidTakaEl = document.getElementById('paidTaka');
-    const balanceTakaEl = document.getElementById('balanceTaka');
+    const months = [
+      'January','February','March','April','May','June','July','August','September','October','November','December'
+    ];
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
-    // State (load from localStorage if present)
-    const storageKey = 'november-mill-2025';
-    let state = loadState();
-
-    function init(){
-      renderTable();
-      bindControls();
-      recalc();
+    // Populate month select for current and next 11 months
+    for(let i=0;i<12;i++){
+      const m = (currentMonth+i)%12;
+      const y = currentYear + Math.floor((currentMonth+i)/12);
+      const opt = document.createElement('option');
+      opt.value = `${m}-${y}`;
+      opt.textContent = `${months[m]} ${y}`;
+      if(i===0) opt.selected = true;
+      monthSelect.appendChild(opt);
     }
 
-    function loadState(){
-      const raw = localStorage.getItem(storageKey);
-      if(raw){
-        try{return JSON.parse(raw);}catch(e){}
+    let state = {};
+
+    function generateTable(month,year){
+      const key = `${month}-${year}`;
+      if(!state[key]){
+        const days = new Date(year, month+1, 0).getDate();
+        state[key] = Array.from({length:days},()=>({l:0,d:0}));
       }
-      // default state
-      const rows = [];
-      for(let d=1; d<=daysInMonth; d++) rows.push({lunch:0,dinner:0});
-      return {rows, priceLunch:20, priceDinner:30, paidAmount:0, notes:''};
-    }
-
-    function saveState(){
-      localStorage.setItem(storageKey, JSON.stringify(state));
-    }
-
-    function renderTable(){
-      tbody.innerHTML = '';
-      state.rows.forEach((r, index) => {
-        const day = index+1;
-        const dateStr = new Date(year, month, day).toLocaleDateString();
+      tbody.innerHTML='';
+      state[key].forEach((r,i)=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${day}</td>
-          <td>${dateStr}</td>
-          <td><input type="number" min="0" value="${r.lunch}" data-row="${index}" data-type="lunch" class="cellInput" style="width:70px;padding:6px;border-radius:6px;border:1px solid #e6eef4"/></td>
-          <td><input type="number" min="0" value="${r.dinner}" data-row="${index}" data-type="dinner" class="cellInput" style="width:70px;padding:6px;border-radius:6px;border:1px solid #e6eef4"/></td>
-          <td class="cellLunchTk">0</td>
-          <td class="cellDinnerTk">0</td>
-          <td class="cellRowTotal">0</td>
-        `;
+        const dateStr = new Date(year,month,i+1).toLocaleDateString();
+        tr.innerHTML=`<td>${i+1}</td><td>${dateStr}</td>
+        <td><input type='number' min='0' value='${r.l}' data-day='${i}' data-type='l' style='width:60px'></td>
+        <td><input type='number' min='0' value='${r.d}' data-day='${i}' data-type='d' style='width:60px'></td>
+        <td class='lTk'>0</td><td class='dTk'>0</td><td class='totalTk'>0</td>`;
         tbody.appendChild(tr);
       });
-      // attach listeners
-      document.querySelectorAll('.cellInput').forEach(inp => inp.addEventListener('input', onCellChange));
-      // apply saved prices
-      priceLunchEl.value = state.priceLunch;
-      priceDinnerEl.value = state.priceDinner;
-      paidAmountEl.value = state.paidAmount;
-      document.getElementById('notes').value = state.notes || '';
-    }
-
-    function onCellChange(e){
-      const idx = Number(e.target.dataset.row);
-      const type = e.target.dataset.type;
-      const val = Number(e.target.value) || 0;
-      state.rows[idx][type] = val;
-      saveState();
-      recalcRow(idx);
+      tbody.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{
+        const {day,type}=e.target.dataset;
+        const key = monthSelect.value;
+        state[key][day][type]=Number(e.target.value)||0;
+        recalc();
+      }));
       recalc();
-    }
-
-    function recalcRow(idx){
-      const tr = tbody.children[idx];
-      const lunch = Number(state.rows[idx].lunch) || 0;
-      const dinner = Number(state.rows[idx].dinner) || 0;
-      const lunchTk = lunch * Number(state.priceLunch || 0);
-      const dinnerTk = dinner * Number(state.priceDinner || 0);
-      const rowTotal = lunchTk + dinnerTk;
-      tr.querySelector('.cellLunchTk').textContent = lunchTk;
-      tr.querySelector('.cellDinnerTk').textContent = dinnerTk;
-      tr.querySelector('.cellRowTotal').textContent = rowTotal;
     }
 
     function recalc(){
-      // sync prices
-      state.priceLunch = Number(priceLunchEl.value) || 0;
-      state.priceDinner = Number(priceDinnerEl.value) || 0;
-      state.paidAmount = Number(paidAmountEl.value) || 0;
-      state.notes = document.getElementById('notes').value || '';
-      saveState();
-
-      // recalc every row
-      state.rows.forEach((r, idx) => recalcRow(idx));
-
-      // totals
-      const totalLunch = state.rows.reduce((s,r)=>s + Number(r.lunch || 0),0);
-      const totalDinner = state.rows.reduce((s,r)=>s + Number(r.dinner || 0),0);
-      const totalTaka = (totalLunch * state.priceLunch) + (totalDinner * state.priceDinner);
-
-      totalLunchCountEl.textContent = totalLunch;
-      totalDinnerCountEl.textContent = totalDinner;
-      totalTakaEl.textContent = totalTaka;
-      paidTakaEl.textContent = state.paidAmount;
-      balanceTakaEl.textContent = (totalTaka - state.paidAmount);
+      const [m,y] = monthSelect.value.split('-').map(Number);
+      const key = `${m}-${y}`;
+      const priceLunch = Number(document.getElementById('priceLunch').value)||0;
+      const priceDinner = Number(document.getElementById('priceDinner').value)||0;
+      const paid = Number(document.getElementById('paidAmount').value)||0;
+      let totalLunch=0,totalDinner=0,totalTk=0;
+      tbody.querySelectorAll('tr').forEach((tr,i)=>{
+        const l=state[key][i].l;
+        const d=state[key][i].d;
+        const lTk=l*priceLunch;
+        const dTk=d*priceDinner;
+        const rowTotal=lTk+dTk;
+        totalLunch+=l; totalDinner+=d; totalTk+=rowTotal;
+        tr.querySelector('.lTk').textContent=lTk;
+        tr.querySelector('.dTk').textContent=dTk;
+        tr.querySelector('.totalTk').textContent=rowTotal;
+      });
+      document.getElementById('totalLunch').textContent=totalLunch;
+      document.getElementById('totalDinner').textContent=totalDinner;
+      document.getElementById('totalTaka').textContent=totalTk;
+      document.getElementById('paidTk').textContent=paid;
+      document.getElementById('balanceTk').textContent=totalTk-paid;
+      localStorage.setItem('mealTrackerState',JSON.stringify(state));
     }
 
-    function bindControls(){
-      document.getElementById('calcBtn').addEventListener('click', recalc);
-      document.getElementById('resetBtn').addEventListener('click', ()=>{
-        if(!confirm('Reset all counts for November 2025? This cannot be undone.')) return;
-        state.rows = state.rows.map(()=>({lunch:0,dinner:0}));
-        state.priceLunch = 0; state.priceDinner = 0; state.paidAmount = 0; state.notes = '';
-        saveState(); renderTable(); recalc();
-      });
-      document.getElementById('fillSample').addEventListener('click', ()=>{
-        // small sample data similar to sheet
-        state.rows[0].lunch = 1; state.rows[0].dinner = 3; // 01-11-2025
-        state.rows[5].notes = null; // placeholder
-        state.priceLunch = Number(priceLunchEl.value) || 20;
-        state.priceDinner = Number(priceDinnerEl.value) || 30;
-        state.paidAmount = Number(paidAmountEl.value) || 3000;
-        saveState(); renderTable(); recalc();
-      });
-
-      document.getElementById('exportBtn').addEventListener('click', ()=>{
-        const csv = rowsToCSV();
-        const blob = new Blob([csv],{type:'text/csv'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'november-mill-2025.csv'; a.click(); URL.revokeObjectURL(url);
-      });
-
-      const fileInput = document.getElementById('fileInput');
-      document.getElementById('importBtn').addEventListener('click', ()=>fileInput.click());
-      fileInput.addEventListener('change', (ev)=>{
-        const f = ev.target.files[0]; if(!f) return;
-        const reader = new FileReader();
-        reader.onload = (e)=>{
-          parseCSV(e.target.result);
-        };
-        reader.readAsText(f);
-      });
-
-      // live update when prices change
-      priceLunchEl.addEventListener('input', ()=>{ state.priceLunch = Number(priceLunchEl.value)||0; saveState(); recalc(); });
-      priceDinnerEl.addEventListener('input', ()=>{ state.priceDinner = Number(priceDinnerEl.value)||0; saveState(); recalc(); });
-      paidAmountEl.addEventListener('input', ()=>{ state.paidAmount = Number(paidAmountEl.value)||0; saveState(); recalc(); });
-    }
-
-    function rowsToCSV(){
-      const headers = ['day','date','lunch','dinner','lunch_tk','dinner_tk','row_total'];
-      const lines = [headers.join(',')];
-      state.rows.forEach((r, idx)=>{
-        const day = idx+1;
-        const date = new Date(year, month, day).toLocaleDateString();
-        const lunchTk = r.lunch * state.priceLunch;
-        const dinnerTk = r.dinner * state.priceDinner;
-        const rowTotal = lunchTk + dinnerTk;
-        lines.push([day,date,r.lunch,r.dinner,lunchTk,dinnerTk,rowTotal].join(','));
-      });
-      lines.push(['','','','TOTAL', state.rows.reduce((s,r)=>s + Number(r.lunch||0),0), state.rows.reduce((s,r)=>s + Number(r.dinner||0),0),''].join(','));
-      lines.push(['notes',state.notes || ''].join(','));
-      lines.push(['priceLunch',state.priceLunch].join(','));
-      lines.push(['priceDinner',state.priceDinner].join(','));
-      lines.push(['paidAmount',state.paidAmount].join(','));
-      return lines.join('\n');
-    }
-
-    function parseCSV(text){
-      const rows = text.trim().split(/\r?\n/).map(r=>r.split(','));
-      // simple parser expecting first column day and lunch,dinner columns
-      const parsed = [];
-      for(const row of rows){
-        if(row.length < 4) continue;
-        const day = Number(row[0]);
-        if(!day || day <1 || day>daysInMonth) continue;
-        const lunch = Number(row[2]) || 0;
-        const dinner = Number(row[3]) || 0;
-        parsed[day-1] = {lunch,dinner};
+    document.getElementById('calcBtn').addEventListener('click',recalc);
+    document.getElementById('resetBtn').addEventListener('click',()=>{
+      if(confirm('Reset this month data?')){
+        const [m,y]=monthSelect.value.split('-').map(Number);
+        const key=`${m}-${y}`;
+        state[key]=state[key].map(()=>({l:0,d:0}));
+        generateTable(m,y);
       }
-      // fill missing
-      for(let i=0;i<daysInMonth;i++) if(!parsed[i]) parsed[i] = {lunch:0,dinner:0};
-      state.rows = parsed;
-      saveState(); renderTable(); recalc();
-      alert('Imported CSV — table updated');
-    }
+    });
 
-    // initialize
-    init();
+    monthSelect.addEventListener('change',()=>{
+      const [m,y]=monthSelect.value.split('-').map(Number);
+      generateTable(m,y);
+    });
+
+    // Load from storage
+    const saved=localStorage.getItem('mealTrackerState');
+    if(saved) state=JSON.parse(saved);
+
+    const [initM,initY]=monthSelect.value.split('-').map(Number);
+    generateTable(initM,initY);
   </script>
 </body>
 </html>
